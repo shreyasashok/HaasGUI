@@ -2,6 +2,7 @@ import javax.swing.*;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.event.*;
 
 public class HaasGUI extends JPanel implements FocusListener {
@@ -12,10 +13,15 @@ public class HaasGUI extends JPanel implements FocusListener {
 		window.setContentPane(new HaasGUI());
 		window.pack();
 		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		window.setLocation(200,200); //move window closer to middle of screen
+		window.setResizable(false);
 		window.setVisible(true);
 	}
 
 	JLabel minValueErrorLabel, maxValueErrorLabel, wordErrorLabel; //Labels used for error validation
+	JTextField minValueField, maxValueField, wordField;
+	boolean minValueFieldTouched = false, maxValueFieldTouched = false, wordFieldTouched = false;
+	JRadioButton trueOption, falseOption;
 
 	public HaasGUI() {
 		JLabel minValueLabel = new JLabel("Min Value");
@@ -32,11 +38,11 @@ public class HaasGUI extends JPanel implements FocusListener {
 		wordErrorLabel = new JLabel("Error!!!");
 		wordErrorLabel.setForeground(Color.RED);
 
-		JTextField minValueField = new JTextField(10); //initialize fields with 10 column width
+		minValueField = new JTextField(10); //initialize fields with 10 column width
 		minValueField.setName("minValueField");
-		JTextField maxValueField = new JTextField(10);
+		maxValueField = new JTextField(10);
 		maxValueField.setName("maxValueField");
-		JTextField wordField = new JTextField(10);
+		wordField = new JTextField(10);
 		wordField.setName("wordField");
 		
 		minValueField.addFocusListener(this);
@@ -44,8 +50,8 @@ public class HaasGUI extends JPanel implements FocusListener {
 		wordField.addFocusListener(this);
 
 		ButtonGroup optionGroup = new ButtonGroup(); //create a button group for the two radio buttons
-		JRadioButton trueOption = new JRadioButton("True");
-		JRadioButton falseOption = new JRadioButton("False");
+		trueOption = new JRadioButton("True");
+		falseOption = new JRadioButton("False");
 		optionGroup.add(trueOption); //add the radio buttons to the group
 		optionGroup.add(falseOption);
 
@@ -75,7 +81,7 @@ public class HaasGUI extends JPanel implements FocusListener {
 
 		c.gridx = 1;
 		c.gridy = 1;
-		c.anchor = GridBagConstraints.CENTER;
+		c.anchor = GridBagConstraints.LINE_START;
 		add(minValueErrorLabel, c);
 		minValueErrorLabel.setVisible(false);
 
@@ -91,7 +97,7 @@ public class HaasGUI extends JPanel implements FocusListener {
 
 		c.gridx = 1;
 		c.gridy = 3;
-		c.anchor = GridBagConstraints.CENTER;
+		c.anchor = GridBagConstraints.LINE_START;
 		add(maxValueErrorLabel, c);
 		maxValueErrorLabel.setVisible(false);
 
@@ -107,7 +113,7 @@ public class HaasGUI extends JPanel implements FocusListener {
 
 		c.gridx = 1;
 		c.gridy = 5;
-		c.anchor = GridBagConstraints.CENTER;
+		c.anchor = GridBagConstraints.LINE_START;
 		add(wordErrorLabel, c);
 		wordErrorLabel.setVisible(false);
 
@@ -146,25 +152,106 @@ public class HaasGUI extends JPanel implements FocusListener {
 
 
 	public void focusGained(FocusEvent e) {
+
 	}
 
 	public void focusLost(FocusEvent e) {
 		String componentName = e.getComponent().getName();
-		System.out.println("Focus lost on "+componentName);
+		String componentText = ((JTextField) e.getComponent()).getText();
+
+		boolean valid = true;
+		double value = 0.0;
+		String errorMessage = "";
 		switch (componentName) {
 			case "minValueField":
-				minValueErrorLabel.setVisible(true);
+				minValueFieldTouched = true;
 				break;
 			case "maxValueField":
-				maxValueErrorLabel.setVisible(true);
+				maxValueFieldTouched = true;
 				break;
 			case "wordField":
-				wordErrorLabel.setVisible(true);
+				wordFieldTouched = true;
 				break;
 		}
+		validateFields();
+
 		JFrame parentWindow = (JFrame) SwingUtilities.getWindowAncestor(this);
 		parentWindow.pack(); //repack the window to accomodate any error messages properly
 
 	}
+
+	private boolean validateFields() {
+
+		boolean minValueIsNumber = false; //Criteria for data validation
+		boolean maxValueIsNumber = false; 
+		boolean maxValueGreaterThanOrEqualToZero = false;
+		boolean maxGreaterThanMin = false;
+		boolean wordIsNotBlank = false;
+		boolean wordHasNoDigits = false;
+
+		double minValue = 0.0, maxValue = 0.0;
+		try {
+			minValue = Double.parseDouble(minValueField.getText());
+			minValueIsNumber = true; //if the parse fails, then this line will not occur
+		}
+		catch (NumberFormatException e) {
+			minValueIsNumber = false;
+		}
+
+		try {
+			maxValue = Double.parseDouble(maxValueField.getText());
+			maxValueIsNumber = true;
+		}
+		catch (NumberFormatException e) {
+			maxValueIsNumber = false;
+		}
+
+		maxValueGreaterThanOrEqualToZero = maxValue >= 0.0;
+		maxGreaterThanMin = maxValue > minValue;
+
+		String wordText = wordField.getText();
+		wordIsNotBlank = !wordText.isEmpty();
+		wordHasNoDigits = !wordText.matches(".*\\d+.*"); //This regex returns true if there are any numbers in the string
+
+		boolean minValueValid = true, maxValueValid = true, wordValid = true;
+		String minValueErrorMessage = "", maxValueErrorMessage = "", wordErrorMessage = "";
+		if (!minValueIsNumber) {
+			minValueValid = false;
+			minValueErrorMessage = "Please enter a number.";
+		}
+		if (!maxValueIsNumber) {
+			maxValueValid = false;
+			maxValueErrorMessage = "Please enter a number.";
+		}
+		if (maxValueIsNumber && minValueIsNumber && !maxGreaterThanMin) {
+			maxValueValid = false;
+			maxValueErrorMessage = "Max value must be greater than Min value.";
+		}
+		if (maxValueIsNumber && !maxValueGreaterThanOrEqualToZero) { //This condition overrides previous condition, this is intentional. This error should have precedence
+			maxValueValid = false;
+			maxValueErrorMessage = "Max value must be greater than or equal to zero.";	
+		}
+		if (!wordHasNoDigits) {
+			wordValid = false;
+			wordErrorMessage = "Word cannot have any numbers.";
+		}
+		if (!wordIsNotBlank) { //This condition overrides previous condition, this is intentional. This error should have precedence
+			wordValid = false;
+			wordErrorMessage = "Please enter a word.";
+		}
+
+		minValueValid = minValueValid || !minValueFieldTouched; //these check if the user has interacted with the field yet
+		maxValueValid = maxValueValid || !maxValueFieldTouched; //we don't want to generate errors on untouched fields, that would be annoying to the user
+		wordValid = wordValid || !wordFieldTouched;
+
+		minValueErrorLabel.setText(minValueErrorMessage); //set our error messages and visibility
+		minValueErrorLabel.setVisible(!minValueValid);
+		maxValueErrorLabel.setText(maxValueErrorMessage);
+		maxValueErrorLabel.setVisible(!maxValueValid);
+		wordErrorLabel.setText(wordErrorMessage);
+		wordErrorLabel.setVisible(!wordValid);
+
+		return minValueValid && maxValueValid && wordValid; //return true if all fields are valid or untouched
+	}	
 }
 
