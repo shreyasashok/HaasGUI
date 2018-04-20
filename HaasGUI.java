@@ -285,18 +285,55 @@ public class HaasGUI extends JPanel implements FocusListener, ActionListener {
 		wordFieldTouched = true;
 		boolean dataValidated = validateFields(); //recheck fields just in case something is wrong
 
-		if (dataValidated) {
+		if (dataValidated) { //only save if the data passes validation checks
 			JFileChooser fc = new JFileChooser();
-			FileNameExtensionFilter fileTypeFilter = new FileNameExtensionFilter("CSV Files", "csv");
+			FileNameExtensionFilter fileTypeFilter = new FileNameExtensionFilter("CSV Files", "csv"); //File chooser set to save to csv
 			fc.setFileFilter(fileTypeFilter);
+
 			int returnValue = fc.showSaveDialog(this);
-			System.out.println(returnValue);
+			File selectedFile = null;
 			if (returnValue == JFileChooser.APPROVE_OPTION) {
-				File selectedFile = fc.getSelectedFile();
+
+				selectedFile = fc.getSelectedFile();
 				if (!selectedFile.getAbsolutePath().endsWith(".csv")) {
 					selectedFile = new File(selectedFile.getAbsolutePath()+".csv"); //JFileChooser doesn't automatically add the file extension, so I do it here if the user didn't
 				}
-				System.out.println(selectedFile.getAbsolutePath());
+
+				if (selectedFile != null) { //check if the file object actually points to a file
+					try {
+						FileWriter fileWriter = new FileWriter(selectedFile); //initialize a FileWriter to write to the CSV File
+
+						fileWriter.append("\"Word\",");
+						String wordString = wordField.getText();
+						wordString = wordString.replace("\"", "\"\""); //If there are quotes in the word, replace them with double quotes as per CSV Standards
+						wordString = "\""+wordString+"\""; //surround the word in quotes
+						fileWriter.append(wordString);
+						fileWriter.append("\n"); //new line at the end of the first data row
+
+						fileWriter.append("\"Min\",");
+						String minValueString = ""+Double.parseDouble(minValueField.getText()); //this concatenation allows the string to look like a double, even if the user enters an integer
+						fileWriter.append(minValueString); //no need to quote this since it should be a number
+						fileWriter.append("\n"); //new line at the end of the second data row
+
+						fileWriter.append("\"Max\",");
+						String maxValueString = ""+Double.parseDouble(maxValueField.getText()); //this concatenation allows the string to look like a double, even if the user enters an integer
+						fileWriter.append(maxValueString); 
+						fileWriter.append("\n"); //new line at the end of the third data row
+
+						String optionValueString = trueOption.isSelected() ? "TRUE" : "FALSE"; //if the True radio button is clicked, this equals TRUE, otherwise FALSE
+						fileWriter.append("\"Option\",");
+						fileWriter.append(optionValueString); 
+						fileWriter.append("\n"); //new line at the end of the fourth data row
+
+						fileWriter.flush(); //properly flush and close the stream to prevent data corruption
+						fileWriter.close();
+
+						JOptionPane.showMessageDialog(this, "Successfully saved file.", "Success", JOptionPane.INFORMATION_MESSAGE);
+					}
+					catch (IOException ioe) {
+						JOptionPane.showMessageDialog(this, "Error saving file. Error: "+ioe.toString(), "File error", JOptionPane.ERROR_MESSAGE); //if there is an unexpected error, tell the user
+					}
+				}
 			}
 		}
 		else {
