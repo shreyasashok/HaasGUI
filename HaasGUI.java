@@ -12,20 +12,19 @@ import java.io.*;
 public class HaasGUI extends JPanel implements FocusListener, ActionListener {
 
 	public static void main(String[] args) { //main subroutine, runs when the program is executed
-		System.out.println("Test output");
 		JFrame window = new JFrame("Data Validation GUI");
 		window.setContentPane(new HaasGUI());
 		window.pack();
 		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		window.setLocation(200,200); //move window closer to middle of screen
-		window.setMinimumSize(window.getSize());
+		window.setMinimumSize(window.getSize()); //make sure the user can't resize the window too small to be usable
 		window.setVisible(true);
 	}
 
 	JLabel minValueErrorLabel, maxValueErrorLabel, wordErrorLabel; //Labels used for error validation
-	JTextField minValueField, maxValueField, wordField;
-	boolean minValueFieldTouched = false, maxValueFieldTouched = false, wordFieldTouched = false;
-	JRadioButton trueOption, falseOption;
+	JTextField minValueField, maxValueField, wordField; //entry fields
+	boolean minValueFieldTouched = false, maxValueFieldTouched = false, wordFieldTouched = false; //keep track of whether the user has interacted with the fields for error handling
+	JRadioButton trueOption, falseOption; //radio buttons for the two options
 
 	public HaasGUI() {
 		JLabel minValueLabel = new JLabel("Min Value");
@@ -33,7 +32,7 @@ public class HaasGUI extends JPanel implements FocusListener, ActionListener {
 		JLabel wordLabel = new JLabel("Word");	
 		JLabel optionLabel = new JLabel("Option");
 
-		minValueErrorLabel = new JLabel(" ");
+		minValueErrorLabel = new JLabel(" "); //these are set to " " because it allows them to preserve their space in the layout, avoiding annoying repositioning of UI elements
 		minValueErrorLabel.setForeground(Color.RED);
 
 		maxValueErrorLabel = new JLabel(" ");
@@ -75,7 +74,7 @@ public class HaasGUI extends JPanel implements FocusListener, ActionListener {
 
 		
 		//Set our constant constraint properties here that will apply to all GUI elements
-		//c.ipadx = 10; //create some padding so that there is space between components
+		c.ipadx = 10; //create some padding so that there is space between components
 		c.ipady = 10;
 
 		//Place the min value label and button
@@ -139,7 +138,7 @@ public class HaasGUI extends JPanel implements FocusListener, ActionListener {
 		c.anchor = GridBagConstraints.LINE_START; //left align
 		add(optionLabel, c);
 
-		JPanel optionsPanel = new JPanel();
+		JPanel optionsPanel = new JPanel(); //create a separate panel for the two options so that they align nicely
 		optionsPanel.setLayout(new GridLayout(1,2,0,0));
 		optionsPanel.add(trueOption);
 		optionsPanel.add(falseOption);
@@ -152,7 +151,7 @@ public class HaasGUI extends JPanel implements FocusListener, ActionListener {
 
 		//Place the OK, Cancel buttons
 
-		JPanel buttonPanel = new JPanel();
+		JPanel buttonPanel = new JPanel(); //create a separate panel for the two buttons so that they align nicely
 		buttonPanel.setLayout(new GridLayout(1,2,3,10));
 		buttonPanel.add(okButton);
 		buttonPanel.add(cancelButton);
@@ -169,7 +168,7 @@ public class HaasGUI extends JPanel implements FocusListener, ActionListener {
 
 	}
 
-	public void focusLost(FocusEvent e) {
+	public void focusLost(FocusEvent e) { //focusLost events on the entry fields trigger error validation
 		String componentName = e.getComponent().getName();
 		String componentText = ((JTextField) e.getComponent()).getText();
 
@@ -189,14 +188,14 @@ public class HaasGUI extends JPanel implements FocusListener, ActionListener {
 
 	}
 
-	public void actionPerformed(ActionEvent e) {
+	public void actionPerformed(ActionEvent e) { //triggered when user presses OK or Cancel
 		String buttonName = ((JButton) e.getSource()).getName(); //find out which button was pressed
 		switch (buttonName) {
 			case "ok":
-				saveData();
+				saveData(); //if they pressed ok, proceed with saveData subroutine
 				break;
 			case "cancel":
-				cancel();
+				cancel(); //if they pressed cancel, proceed with the cancel subroutine
 				break;
 		}
 	}
@@ -207,7 +206,7 @@ public class HaasGUI extends JPanel implements FocusListener, ActionListener {
 		boolean maxValueIsNumber = false; 
 		boolean maxValueGreaterThanOrEqualToZero = false;
 		boolean maxGreaterThanMin = false;
-		boolean wordIsNotBlank = false;
+		boolean wordIsNotBlank = false; //I assume we want a required input into the word field. If it is not required, this criteria should be removed
 		boolean wordHasNoDigits = false;
 
 		double minValue = 0.0, maxValue = 0.0;
@@ -231,7 +230,7 @@ public class HaasGUI extends JPanel implements FocusListener, ActionListener {
 		maxGreaterThanMin = maxValue > minValue;
 
 		String wordText = wordField.getText();
-		wordIsNotBlank = !wordText.isEmpty();
+		wordIsNotBlank = !wordText.isEmpty(); 
 		wordHasNoDigits = !wordText.matches(".*\\d+.*"); //This regex returns true if there are any numbers in the string
 
 		boolean minValueValid = true, maxValueValid = true, wordValid = true;
@@ -244,7 +243,7 @@ public class HaasGUI extends JPanel implements FocusListener, ActionListener {
 			maxValueValid = false;
 			maxValueErrorMessage = "Please enter a number.";
 		}
-		if (maxValueIsNumber && minValueIsNumber && !maxGreaterThanMin) {
+		if (maxValueIsNumber && minValueIsNumber && !maxGreaterThanMin) { //only check this if both fields are valid numbers
 			maxValueValid = false;
 			maxValueErrorMessage = "Max value must be greater than Min value.";
 		}
@@ -283,7 +282,7 @@ public class HaasGUI extends JPanel implements FocusListener, ActionListener {
 		minValueFieldTouched = true; //set all fields to dirty, since the user wants to save
 		maxValueFieldTouched = true; //by doing that, we can properly validate all fields
 		wordFieldTouched = true;
-		boolean dataValidated = validateFields(); //recheck fields just in case something is wrong
+		boolean dataValidated = validateFields(); //validate fields before saving
 
 		if (dataValidated) { //only save if the data passes validation checks
 			JFileChooser fc = new JFileChooser();
@@ -292,7 +291,7 @@ public class HaasGUI extends JPanel implements FocusListener, ActionListener {
 
 			int returnValue = fc.showSaveDialog(this);
 			File selectedFile = null;
-			if (returnValue == JFileChooser.APPROVE_OPTION) {
+			if (returnValue == JFileChooser.APPROVE_OPTION) { //if the user approved the file save operation
 
 				selectedFile = fc.getSelectedFile();
 				if (!selectedFile.getAbsolutePath().endsWith(".csv")) {
@@ -328,7 +327,7 @@ public class HaasGUI extends JPanel implements FocusListener, ActionListener {
 						fileWriter.flush(); //properly flush and close the stream to prevent data corruption
 						fileWriter.close();
 
-						JOptionPane.showMessageDialog(this, "Successfully saved file.", "Success", JOptionPane.INFORMATION_MESSAGE);
+						JOptionPane.showMessageDialog(this, "Successfully saved file.", "Success", JOptionPane.INFORMATION_MESSAGE); //dialog to indicate success
 					}
 					catch (IOException ioe) {
 						JOptionPane.showMessageDialog(this, "Error saving file. Error: "+ioe.toString(), "File error", JOptionPane.ERROR_MESSAGE); //if there is an unexpected error, tell the user
