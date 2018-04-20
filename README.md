@@ -9,4 +9,4 @@ To compile:
 2) javac HaasGUI.java
 
 To run:
-3) java HaasGUI
+1) java HaasGUI
